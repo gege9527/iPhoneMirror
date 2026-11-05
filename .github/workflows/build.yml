@@ -1,0 +1,44 @@
+name: Build macOS package
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up portable Python
+        run: |
+          curl -L --retry 3 -o pbs.tar.gz \
+            "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.12.16%2B20261026-x86_64-apple-darwin-install_only_stripped.tar.gz"
+          mkdir -p pbs
+          tar xzf pbs.tar.gz -C pbs --strip-components=1
+          ./pbs/bin/python3 -V
+
+      - name: Install dependencies
+        run: |
+          ./pbs/bin/python3 -m pip install --only-binary=:all: -q \
+            pymobiledevice3 pyusb pyinstaller
+
+      - name: Build app and zip
+        run: IPM_PYTHON=$PWD/pbs/bin/python3 ./build.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iPhoneMirror-macOS-x86_64
+          path: iPhoneMirror-macOS-x86_64.zip
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: iPhoneMirror-macOS-x86_64.zip
+          body_path: RELEASE_NOTES.md
