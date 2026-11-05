@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+
+# 构建产物
+player
+build/
+build_*/
+dist/
+dist_*/
+*.spec
+*.zip
+iPhoneMirror.app/
+
+# 开发归档（早期实验脚本）
+archive/
